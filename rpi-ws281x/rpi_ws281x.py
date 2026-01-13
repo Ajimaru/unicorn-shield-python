@@ -11,14 +11,14 @@
 from sys import version_info
 if version_info >= (3,3,0):
     def swig_import_helper():
-        from os.path import dirname
+        from os.path import dirname, join
         import importlib.util
         import importlib.machinery
         try:
             # Try to find the module in the same directory
             module_dir = dirname(__file__)
-            loader = importlib.machinery.ExtensionFileLoader('_rpi_ws281x', 
-                module_dir + '/_rpi_ws281x.so')
+            module_path = join(module_dir, '_rpi_ws281x.so')
+            loader = importlib.machinery.ExtensionFileLoader('_rpi_ws281x', module_path)
             spec = importlib.util.spec_from_loader('_rpi_ws281x', loader)
             if spec:
                 _mod = importlib.util.module_from_spec(spec)

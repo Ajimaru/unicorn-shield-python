@@ -13,6 +13,14 @@ def Color(red, green, blue):
     return (red << 16) | (green << 8) | blue
 
 
+class RGB:
+    """Simple container for RGB color components."""
+    def __init__(self, r, g, b):
+        self.r = r
+        self.g = g
+        self.b = b
+
+
 class _LED_Data:
     """Wrapper class which makes a SWIG LED color data array look and feel like
     a Python list of integers.
@@ -158,12 +166,6 @@ class Adafruit_NeoPixel:
         """Get the RGB color components for the LED at position n.
         Returns an object with r, g, b attributes.
         """
-        class RGB:
-            def __init__(self, r, g, b):
-                self.r = r
-                self.g = g
-                self.b = b
-        
         color = self._led_data[n]
         return RGB(
             (color >> 16) & 0xff,
