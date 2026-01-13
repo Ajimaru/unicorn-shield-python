@@ -28,9 +28,10 @@ classifiers = ['Development Status :: 5 - Production/Stable',
                'Operating System :: POSIX :: Linux',
                'License :: OSI Approved :: MIT License',
                'Intended Audience :: Developers',
-               'Programming Language :: Python :: 2.6',
-               'Programming Language :: Python :: 2.7',
                'Programming Language :: Python :: 3',
+               'Programming Language :: Python :: 3.10',
+               'Programming Language :: Python :: 3.11',
+               'Programming Language :: Python :: 3.12',
                'Topic :: Software Development',
                'Topic :: System :: Hardware']
 
@@ -46,5 +47,6 @@ setup(
     url             = 'http://cw42.io/unicorn',
     classifiers     = classifiers,
     py_modules      = [ 'unicornshield' ],
-    install_requires= ['rpi_ws281x >= 2.0.5']
+    install_requires= ['rpi_ws281x >= 2.0.5'],
+    python_requires = '>=3.10'
 )
