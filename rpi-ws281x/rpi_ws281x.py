@@ -9,22 +9,26 @@
 
 
 from sys import version_info
-if version_info >= (2,6,0):
+if version_info >= (3,3,0):
     def swig_import_helper():
         from os.path import dirname
-        import imp
-        fp = None
+        import importlib.util
+        import importlib.machinery
         try:
-            fp, pathname, description = imp.find_module('_rpi_ws281x', [dirname(__file__)])
-        except ImportError:
-            import _rpi_ws281x
-            return _rpi_ws281x
-        if fp is not None:
-            try:
-                _mod = imp.load_module('_rpi_ws281x', fp, pathname, description)
-            finally:
-                fp.close()
-            return _mod
+            # Try to find the module in the same directory
+            module_dir = dirname(__file__)
+            loader = importlib.machinery.ExtensionFileLoader('_rpi_ws281x', 
+                module_dir + '/_rpi_ws281x.so')
+            spec = importlib.util.spec_from_loader('_rpi_ws281x', loader)
+            if spec:
+                _mod = importlib.util.module_from_spec(spec)
+                loader.exec_module(_mod)
+                return _mod
+        except (ImportError, FileNotFoundError):
+            pass
+        # Fallback to direct import
+        import _rpi_ws281x
+        return _rpi_ws281x
     _rpi_ws281x = swig_import_helper()
     del swig_import_helper
 else:
