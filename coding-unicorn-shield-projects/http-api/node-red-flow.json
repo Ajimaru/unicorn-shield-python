@@ -1,0 +1,32 @@
+[
+    {"id":"unicorn_tab","type":"tab","label":"Unicorn Shield","disabled":false,"info":"Controls the Coding Unicorn Shield via the local HTTP API (unicorn-api.service on port 5000)."},
+
+    {"id":"c_bright","type":"comment","z":"unicorn_tab","name":"--- Setup: run brightness once ---","info":"","x":170,"y":40,"wires":[]},
+    {"id":"inj_bright","type":"inject","z":"unicorn_tab","name":"Brightness 0.3","props":[],"repeat":"","once":true,"onceDelay":"1","topic":"","x":140,"y":80,"wires":[["req_bright"]]},
+    {"id":"req_bright","type":"http request","z":"unicorn_tab","name":"","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/brightness?value=0.3","x":390,"y":80,"wires":[["dbg"]]},
+
+    {"id":"c_mane","type":"comment","z":"unicorn_tab","name":"--- Mane (all 9 pixels) ---","info":"","x":150,"y":140,"wires":[]},
+    {"id":"inj_pink","type":"inject","z":"unicorn_tab","name":"Pink","props":[],"repeat":"","once":false,"topic":"","x":110,"y":180,"wires":[["req_pink"]]},
+    {"id":"req_pink","type":"http request","z":"unicorn_tab","name":"all pink","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/all?r=255&g=0&b=180","x":330,"y":180,"wires":[["dbg"]]},
+    {"id":"inj_green","type":"inject","z":"unicorn_tab","name":"Green","props":[],"repeat":"","once":false,"topic":"","x":110,"y":220,"wires":[["req_green"]]},
+    {"id":"req_green","type":"http request","z":"unicorn_tab","name":"all green","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/all?r=0&g=255&b=0","x":330,"y":220,"wires":[["dbg"]]},
+    {"id":"inj_blue","type":"inject","z":"unicorn_tab","name":"Blue","props":[],"repeat":"","once":false,"topic":"","x":110,"y":260,"wires":[["req_blue"]]},
+    {"id":"req_blue","type":"http request","z":"unicorn_tab","name":"all blue","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/all?r=0&g=0&b=255","x":330,"y":260,"wires":[["dbg"]]},
+    {"id":"inj_off","type":"inject","z":"unicorn_tab","name":"Mane OFF","props":[],"repeat":"","once":false,"topic":"","x":120,"y":300,"wires":[["req_off"]]},
+    {"id":"req_off","type":"http request","z":"unicorn_tab","name":"off","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/off","x":330,"y":300,"wires":[["dbg"]]},
+
+    {"id":"c_eyes","type":"comment","z":"unicorn_tab","name":"--- Eyes (D1 / D2) ---","info":"","x":140,"y":360,"wires":[]},
+    {"id":"inj_eyeson","type":"inject","z":"unicorn_tab","name":"Eyes ON","props":[],"repeat":"","once":false,"topic":"","x":120,"y":400,"wires":[["req_eyeson"]]},
+    {"id":"req_eyeson","type":"http request","z":"unicorn_tab","name":"eyes on","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/eyes?status=on","x":330,"y":400,"wires":[["dbg"]]},
+    {"id":"inj_eyesoff","type":"inject","z":"unicorn_tab","name":"Eyes OFF","props":[],"repeat":"","once":false,"topic":"","x":120,"y":440,"wires":[["req_eyesoff"]]},
+    {"id":"req_eyesoff","type":"http request","z":"unicorn_tab","name":"eyes off","method":"GET","ret":"txt","url":"http://127.0.0.1:5000/eyes?status=off","x":330,"y":440,"wires":[["dbg"]]},
+
+    {"id":"c_sensors","type":"comment","z":"unicorn_tab","name":"--- Sensors: poll every 1s ---","info":"","x":160,"y":500,"wires":[]},
+    {"id":"inj_poll","type":"inject","z":"unicorn_tab","name":"every 1s","props":[],"repeat":"1","once":false,"topic":"","x":120,"y":540,"wires":[["req_nose","req_ear"]]},
+    {"id":"req_nose","type":"http request","z":"unicorn_tab","name":"light sensor","method":"GET","ret":"obj","url":"http://127.0.0.1:5000/nose","x":340,"y":540,"wires":[["nose_out"]]},
+    {"id":"nose_out","type":"debug","z":"unicorn_tab","name":"light","active":true,"tosidebar":true,"complete":"payload.data","targetType":"msg","x":540,"y":540,"wires":[]},
+    {"id":"req_ear","type":"http request","z":"unicorn_tab","name":"button","method":"GET","ret":"obj","url":"http://127.0.0.1:5000/ear","x":330,"y":580,"wires":[["ear_out"]]},
+    {"id":"ear_out","type":"debug","z":"unicorn_tab","name":"button","active":true,"tosidebar":true,"complete":"payload.data","targetType":"msg","x":540,"y":580,"wires":[]},
+
+    {"id":"dbg","type":"debug","z":"unicorn_tab","name":"api reply","active":true,"tosidebar":true,"complete":"payload","targetType":"msg","x":560,"y":180,"wires":[]}
+]

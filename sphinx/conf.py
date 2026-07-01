@@ -10,9 +10,12 @@ import mock
 
 import sphinx_rtd_theme
 
-sys.modules['neopixel'] = mock.Mock()
+# Mock the hardware-only modules so autodoc can import unicornshield on any
+# machine (these only exist on a Raspberry Pi with the shield attached).
+for _mod in ('rpi_ws281x', 'neopixel', 'gpiozero', 'RPi', 'RPi.GPIO'):
+    sys.modules[_mod] = mock.Mock()
 
-sys.path.insert(0, '../UnicornHat/')
+sys.path.insert(0, '../UnicornShield/')
 
 
 from sphinx.ext import autodoc
@@ -53,16 +56,16 @@ def setup(app):
     ModuleOutlineDocumenter.objtype = 'module'
 
 
-import unicornhat
+import unicornshield
 
-PACKAGE_NAME = u"Unicorn HAT"
-PACKAGE_HANDLE = "UnicornHAT"
-PACKAGE_MODULE = "unicornhat"
+PACKAGE_NAME = u"Coding Unicorn Shield"
+PACKAGE_HANDLE = "UnicornShield"
+PACKAGE_MODULE = "unicornshield"
 
-if hasattr(unicornhat,"__version__"):
-    PACKAGE_VERSION = unicornhat.__version__
+if hasattr(unicornshield,"__version__"):
+    PACKAGE_VERSION = unicornshield.__version__
 else:
-    PACKAGE_VERSION = "x.x.x"
+    PACKAGE_VERSION = "0.0.1"
 
 
 # -- General configuration ------------------------------------------------
@@ -98,8 +101,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = PACKAGE_NAME
-copyright = u'2016, Pimoroni Ltd'
-author = u'Phil Howard'
+copyright = u'2017, Coding World'
+author = u'Samuel Brinkmann'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -316,7 +319,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, PACKAGE_HANDLE + '.tex', PACKAGE_NAME + u' Documentation',
-     u'Phil Howard', 'manual'),
+     author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

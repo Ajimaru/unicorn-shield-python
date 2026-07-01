@@ -8,93 +8,110 @@
 Welcome
 -------
 
-This documentation will guide you through the methods available in the Unicorn HAT python library.
+This documentation covers the methods available in the Coding Unicorn Shield
+Python library (:python:`unicornshield`).
 
-Unicorn HAT is a Raspberry Pi add-on with 64 individually controllable RGB LEDs.
+The Coding Unicorn Shield is a Raspberry Pi add-on with **9 individually
+controllable RGB LEDs** (the mane), **two single-colour eye LEDs**, a **push
+button**, and a capacitive **nose** sensor.
 
-* More information - https://shop.pimoroni.com/products/unicorn-hat
-* GPIO pinout - https://pinout.xyz/unicorn_hat
-* Get the code - https://github.com/pimoroni/unicorn-hat
-* Get started - https://learn.pimoroni.com/tutorial/unicorn-hat/getting-started-with-unicorn-hat
-* Get help - http://forums.pimoroni.com/c/support
+* Library source - https://github.com/coding-world/unicorn-shield-python
+* Example projects - https://github.com/coding-world/coding-unicorn-shield-projects
+* More resources (German) - https://codingworld.io
 
-At A Glance
------------
+.. note::
 
-.. automoduleoutline:: unicornhat
-   :members:
+   The mane LEDs (WS2812) are driven via PWM/DMA and therefore require root
+   privileges. Run your scripts with ``sudo``.
+
+.. warning::
+
+   The RGB LEDs can be very bright and blinking patterns may trigger
+   photosensitive seizures. Keep the brightness low (0.2 is recommended) and do
+   not stare directly into the LEDs. See ``EXTREMELY_IMPORTANT_WARNINGS.txt``.
+
+Getting Started
+---------------
+
+.. code-block:: python
+
+   import unicornshield as unicorn
+   import time
+
+   unicorn.brightness(0.2)      # keep it dim!
+   unicorn.setAll(255, 0, 255)  # all 9 mane LEDs magenta
+   unicorn.show()
+   time.sleep(1)
+   unicorn.off()
+
+Mane LEDs
+=========
+
+The mane consists of 9 RGB LEDs, addressed by index ``0`` to ``8``. Changes to
+the buffer are only visible after calling :python:`show()`.
 
 Brightness
 ----------
 
-.. autofunction:: unicornhat.brightness
-
-Clear
------
-
-.. autofunction:: unicornhat.clear
+.. autofunction:: unicornshield.brightness
 
 Get Brightness
 --------------
 
-.. autofunction:: unicornhat.get_brightness
-
-Get Pixel
----------
-
-.. autofunction:: unicornhat.get_pixel
-
-Get Pixels
-----------
-
-.. autofunction:: unicornhat.get_pixels
-
-Get Shape
----------
-
-.. autofunction:: unicornhat.get_shape
-
-Turn Off
---------
-
-.. autofunction:: unicornhat.off
-
-Rotation
---------
-
-.. autofunction:: unicornhat.rotation
-
-Set All
--------
-
-.. autofunction:: unicornhat.set_all
-
-Set Layout
-----------
-
-.. autofunction:: unicornhat.set_layout
+.. autofunction:: unicornshield.getBrightness
 
 Set Pixel
 ---------
 
-.. autofunction:: unicornhat.set_pixel
+.. autofunction:: unicornshield.setPixel
 
-Set Pixel HSV
--------------
+Get Pixel
+---------
 
-.. autofunction:: unicornhat.set_pixel_hsv
+.. autofunction:: unicornshield.getPixel
 
-Set Pixels
-----------
+Set All
+-------
 
-.. autofunction:: unicornhat.set_pixels
-
-Shade Pixels
-------------
-
-.. autofunction:: unicornhat.shade_pixels
+.. autofunction:: unicornshield.setAll
 
 Show
 ----
 
-.. autofunction:: unicornhat.show
+.. autofunction:: unicornshield.show
+
+Clear
+-----
+
+.. autofunction:: unicornshield.clear
+
+Turn Off
+--------
+
+.. autofunction:: unicornshield.off
+
+Eyes
+====
+
+Two single-colour LEDs, controlled independently.
+
+.. autofunction:: unicornshield.leftEyeOn
+
+.. autofunction:: unicornshield.leftEyeOff
+
+.. autofunction:: unicornshield.rightEyeOn
+
+.. autofunction:: unicornshield.rightEyeOff
+
+Button
+======
+
+.. autofunction:: unicornshield.buttonPressed
+
+Nose
+====
+
+A capacitive touch sensor. :python:`nose()` returns the charge time in seconds;
+a higher value means the nose is being touched.
+
+.. autofunction:: unicornshield.nose
