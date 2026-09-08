@@ -38,7 +38,7 @@ We have created a libary for the Raspberry Pi and Python. You can install it wit
 ```cd rpi-ws281x```
 
 
-```sudo python setup.py install```
+```sudo python3 setup.py install```
 
 
 ```cd ..```
@@ -47,7 +47,7 @@ We have created a libary for the Raspberry Pi and Python. You can install it wit
 ```cd UnicornShield```
 
 
-```sudo python setup.py install```
+```sudo python3 setup.py install```
 
 
 ```cd ..```
@@ -129,7 +129,7 @@ while True:
 
 ## How to execute the program
 
-You can execute the program with `sudo python demo.py` and then stop the program at any time with `Ctrl + C`.  You always need to execute the program with sudo because we need the pwm signals for the Pixels/WS2812B LEDs.
+You can execute the program with `sudo python3 demo.py` and then stop the program at any time with `Ctrl + C`.  You always need to execute the program with sudo because we need the pwm signals for the Pixels/WS2812B LEDs.
 
 ## Step for Step
 In the first three lines we are including all the neccassary libaries. We need the `unicornshield` libary which we did install in the steps before. because `unicornshield` is quiet a long name, we use the `as unicorn` for giving it a short nickname. For making our animation more beautial we also use the `sleep()`

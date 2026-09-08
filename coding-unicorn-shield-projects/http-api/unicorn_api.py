@@ -1,8 +1,14 @@
 from flask import Flask, request
 from flask_cors import CORS
 import json
+import logging
 import threading
 import unicornshield as unicorn
+
+# Silence the werkzeug per-request access log. Node-RED polls /nose and /ear
+# continuously, which wrote ~10k lines/day into /var/log/daemon.log via rsyslog
+# for requests nobody reads back. WARNING keeps errors and tracebacks visible.
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
 try:
     import queue
@@ -213,4 +219,9 @@ if __name__ == "__main__":
     # threaded=True: accept concurrent HTTP requests (dashboard polls + clicks).
     # All actual hardware access is funneled to one worker thread (see hw()),
     # so DMA show() always runs on the same thread and never hangs.
-    app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
+    # Bind to loopback only. The sole consumer is the Node-RED flow on this
+    # same host (verified: 395/395 requests over 24h came from 127.0.0.1), and
+    # there is no firewall on this box, so listening on 0.0.0.0 exposed the
+    # unauthenticated hardware API - and the permissive CORS(app) above - to
+    # the whole LAN for no benefit.
+    app.run(debug=False, host='127.0.0.1', port=5000, threaded=True)

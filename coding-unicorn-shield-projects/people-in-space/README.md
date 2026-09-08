@@ -55,7 +55,7 @@ try:
 except:
   unicorn.clear()
 ```
-`sudo python people-in-space.py`
+`sudo python3 people-in-space.py`
 
 You can always end the program with `Ctrl+C`.
 

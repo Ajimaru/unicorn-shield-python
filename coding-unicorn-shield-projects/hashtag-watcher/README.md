@@ -15,11 +15,11 @@ For this you need:
 For this project to work we need to install the following python libaries on your raspberry pi:
 
 
-`sudo pip install twython`
+`sudo pip3 install twython`
 
  In our case we did also need to install the following libary:
 
- `sudo pip install requests requests_oauthlib`
+ `sudo pip3 install requests requests_oauthlib`
 
 
 ## Code
@@ -57,7 +57,7 @@ try:
 except KeyboardInterrupt:
   unicorn.clear()
 ```
-`sudo python hastag-watcher.py`
+`sudo python3 hastag-watcher.py`
 
 Before starting the program, please use your API credentials in line 8 to 11. Please keep in mind to never pulish them.
 
