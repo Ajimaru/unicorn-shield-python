@@ -48,7 +48,12 @@ def measure(pin):
     time.sleep(0.1)
     gpio.setup(pin, gpio.IN)
     while gpio.input(pin) == 0:
-        pass
+        # Yield the CPU between polls. A tight `pass` loop spins a full core
+        # for the whole charge time (~0.3s), which on a single-core Pi is a
+        # ~30% permanent load when /nose is polled once a second. Sleeping 1ms
+        # cuts CPU ~3x and does not affect the reading: the charge time is
+        # three orders of magnitude larger than the poll interval.
+        time.sleep(0.001)
     return time.time() - startTime
 
 def nose():
