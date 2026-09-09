@@ -82,6 +82,35 @@ def _clear():
     unicorn.clear()
 
 
+# --- zones ---------------------------------------------------------------------
+# Named groups of mane pixels, so callers can address a body part instead of
+# memorising indices. Pixel numbers here are 0-based, matching /pixel/<0-8>;
+# the silkscreen labels P1..P9 on the board are 1-based, so P1 is index 0.
+ZONES = {
+    "paw-rear-right":  [0],   # P1
+    "paw-front-right": [1],   # P2
+    "paw-front-left":  [2],   # P3
+    "paw-rear-left":   [3],   # P4
+    "tail":            [4, 5, 6],   # P5-P7
+    "mane":            [7, 8],      # P8-P9
+}
+
+# Convenience groups built from the ones above.
+ZONES["paws"] = (ZONES["paw-rear-right"] + ZONES["paw-front-right"]
+                 + ZONES["paw-front-left"] + ZONES["paw-rear-left"])
+ZONES["paws-right"] = ZONES["paw-rear-right"] + ZONES["paw-front-right"]
+ZONES["paws-left"] = ZONES["paw-front-left"] + ZONES["paw-rear-left"]
+ZONES["paws-front"] = ZONES["paw-front-right"] + ZONES["paw-front-left"]
+ZONES["paws-rear"] = ZONES["paw-rear-right"] + ZONES["paw-rear-left"]
+ZONES["all"] = sorted(set(sum(ZONES.values(), [])))
+
+
+def _set_zone(pixels, r, g, b):
+    for i in pixels:
+        unicorn.setPixel(i, r, g, b)
+    unicorn.show()
+
+
 def _eyes(left, right):
     if left is not None:
         unicorn.leftEyeOn() if left else unicorn.leftEyeOff()
@@ -105,8 +134,11 @@ def helproute():
             "GET /eyes?status=on|off": "both eyes",
             "GET /pixel/<0-8>?r=&g=&b=": "set one mane pixel + show",
             "GET /all?r=&g=&b=": "set all 9 mane pixels + show",
+            "GET /zone/<name>?r=&g=&b=": "set one named body zone (see /zones)",
+            "GET /zones": "list zone names and their pixel indices",
             "GET /off": "clear mane (all pixels off)",
             "GET /brightness?value=0.0-1.0": "set mane brightness",
+            "GET /brightness": "read current mane brightness (0.0-1.0)",
             "GET /nose": ("read light sensor (charge time seconds); "
                           "adds timeout=true when too dark to measure"),
             "GET /ear": "read button state (true/false)",
@@ -185,6 +217,24 @@ def all_pixels():
     return ok()
 
 
+@app.route("/zone/<name>")
+def zone(name):
+    pixels = ZONES.get(name)
+    if pixels is None:
+        return err("unknown zone >%s< (see /zones)" % name)
+    try:
+        r, g, b = _rgb()
+    except ValueError as e:
+        return err(str(e))
+    hw(_set_zone, pixels, r, g, b)
+    return ok()
+
+
+@app.route("/zones")
+def zones():
+    return json.dumps({"status": True, "zones": ZONES})
+
+
 @app.route("/off")
 def off():
     hw(_clear)
@@ -194,8 +244,11 @@ def off():
 @app.route("/brightness")
 def brightness():
     value = request.args.get('value')
+    # Without a value this reads instead of writes. Brightness is global and
+    # persists between calls, so a caller that did not set it is at the mercy of
+    # whoever set it last - being able to read it back makes that debuggable.
     if value is None:
-        return err("send >value< (0.0-1.0) via GET parameter")
+        return ok(data=hw(unicorn.getBrightness))
     try:
         value = float(value)
     except ValueError:

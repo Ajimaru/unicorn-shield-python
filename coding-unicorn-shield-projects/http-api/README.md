@@ -54,12 +54,61 @@ Default base URL: `http://127.0.0.1:5000`
 | `GET /eyes?status=on\|off` | Both eyes at once |
 | `GET /pixel/<0-8>?r=&g=&b=` | Set one mane pixel and show it |
 | `GET /all?r=&g=&b=` | Set all 9 mane pixels and show them |
+| `GET /zone/<name>?r=&g=&b=` | Set one named body zone and show it |
+| `GET /zones` | List zone names and their pixel indices |
 | `GET /off` | Clear the mane |
 | `GET /brightness?value=0.0-1.0` | Set mane brightness |
+| `GET /brightness` | Read the current mane brightness |
 | `GET /nose` | Read the light sensor (charge time in seconds) |
 | `GET /ear` | Read the button state (`true` / `false`) |
 
 `r`, `g` and `b` are integers from 0 to 255.
+
+**Brightness is global and persists between calls.** It is a property of the
+strip, not of a request, so whatever the last caller set stays in effect — a
+night-time dimmer, a test script, a Node-RED flow. Setting a colour without
+setting brightness means inheriting theirs, and at a low value the pixels are
+written correctly, the API answers `{"status": true}`, and you still see
+nothing.
+
+If your colour must be visible regardless of what ran before, set the
+brightness in the same sequence:
+
+```bash
+curl "http://127.0.0.1:5000/brightness?value=0.5"
+curl "http://127.0.0.1:5000/all?r=255&g=128&b=0"
+```
+
+`GET /brightness` without a value reads the current setting back, which is the
+quickest way to check this when something stays dark. Note that dimming affects
+every zone at once — there is no per-zone brightness.
+
+### Zones
+
+Rather than addressing pixels by number, `/zone/<name>` targets a part of the
+unicorn. Pixel indices are 0-based to match `/pixel/<0-8>`; the silkscreen
+labels P1–P9 on the board are 1-based, so **P1 is index 0**.
+
+| Zone | Pixels | Board |
+| --- | --- | --- |
+| `paw-rear-right` | 0 | P1 |
+| `paw-front-right` | 1 | P2 |
+| `paw-front-left` | 2 | P3 |
+| `paw-rear-left` | 3 | P4 |
+| `tail` | 4, 5, 6 | P5–P7 |
+| `mane` | 7, 8 | P8–P9 |
+
+Convenience groups: `paws` (all four), `paws-left`, `paws-right`, `paws-front`,
+`paws-rear`, and `all`.
+
+```bash
+curl "http://127.0.0.1:5000/zone/tail?r=0&g=0&b=255"
+curl "http://127.0.0.1:5000/zone/paws-front?r=255&g=255&b=255"
+```
+
+`GET /zones` returns the mapping, so a client can discover the names instead of
+hard-coding them. The zone layout lives in `ZONES` at the top of
+`unicorn_api.py` — adjust it there if the board is wired differently.
 
 ## Example
 
@@ -121,8 +170,20 @@ endpoint answers `{"status": true}` whether or not anything actually lights up,
 and so do `ws2811_init()` and `ws2811_render()` underneath. A successful response
 says the data was sent, not that a pixel lit.
 
-If the eyes work but the mane is dark, **measure resistance between DIN and DOUT
-on each pixel** before suspecting the driver. This is faster and more conclusive
+**Check the brightness first** — it is the cheap explanation. Brightness is
+global and survives between calls, so a low value left behind by something else
+makes correctly-written colours invisible:
+
+```bash
+curl "http://127.0.0.1:5000/brightness"     # e.g. {"status": true, "data": 0.02}
+```
+
+Two more things that are not faults: the mane needs `snd_bcm2835` blacklisted,
+because onboard audio claims the same PWM block (see the note below), and a
+covered nose sensor returns a capped reading rather than a real one.
+
+If brightness is sane and the eyes work but the mane is still dark, **measure
+resistance between DIN and DOUT on each pixel** before suspecting the driver. This is faster and more conclusive
 than an oscilloscope:
 
 | Reading | Meaning |
@@ -153,3 +214,26 @@ A dead pixel may glow — often green — while you probe it. The meter's test
 current writes a stray value into the colour register, and WS2812 transmits GRB
 (green first). That is a sign the LEDs themselves are fine and only the
 controller's data path failed.
+
+## Onboard audio conflicts with the mane
+
+On the Raspberry Pi the same PWM block drives both the 3.5 mm headphone jack and
+the WS2812 data line on GPIO18, so the two cannot run at once. With onboard
+audio enabled the mane stays dark, and every LED update puts an audible click
+into the audio output.
+
+The mane therefore needs onboard audio disabled:
+
+```
+# /boot/config.txt
+dtparam=audio=off
+```
+
+```
+# /etc/modprobe.d/blacklist-snd-bcm2835.conf
+blacklist snd_bcm2835
+```
+
+To keep sound as well, use an output that does not touch the PWM block — a USB
+audio adapter with a headphone jack, or Bluetooth. Note that a USB dongle may be
+capture-only; check that `aplay -l` lists it, not just `arecord -l`.
