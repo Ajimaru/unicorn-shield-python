@@ -41,13 +41,30 @@ def buttonPressed():
     return button.is_pressed
 
 # Nose
-def measure(pin):
+# Upper bound for a nose() reading. The sensor charges a capacitor and times how
+# long the pin takes to go high, so darker means longer - and in a dark room the
+# pin may never flip at all. Without a cap the loop below would spin forever, and
+# because callers funnel all hardware access through a single worker thread (see
+# the http-api project), one stuck reading takes down every other endpoint too,
+# not just this one. Room light measures ~0.3 s, so 2 s is well clear of normal.
+NOSE_TIMEOUT = 2.0
+
+
+def measure(pin, timeout=NOSE_TIMEOUT):
+    """Charge time of the sensor on *pin*, in seconds.
+
+    Returns *timeout* if the pin does not go high in time - that is not a real
+    reading but a floor value meaning "at least this dark". A float is always
+    returned so that callers comparing against a threshold keep working.
+    """
     startTime = time.time()
     gpio.setup(pin, gpio.OUT)
     gpio.output(pin, gpio.LOW)
     time.sleep(0.1)
     gpio.setup(pin, gpio.IN)
     while gpio.input(pin) == 0:
+        if time.time() - startTime > timeout:
+            return timeout
         # Yield the CPU between polls. A tight `pass` loop spins a full core
         # for the whole charge time (~0.3s), which on a single-core Pi is a
         # ~30% permanent load when /nose is polled once a second. Sleeping 1ms

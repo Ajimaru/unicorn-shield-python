@@ -113,3 +113,43 @@ from src.unicornMock import unicornmock as unicorn
 
 The server then responds with default values, so you can develop against the
 API without the hardware.
+
+## Troubleshooting: the mane stays dark
+
+WS2812 LEDs are write-only — there is no return channel from the strip. So every
+endpoint answers `{"status": true}` whether or not anything actually lights up,
+and so do `ws2811_init()` and `ws2811_render()` underneath. A successful response
+says the data was sent, not that a pixel lit.
+
+If the eyes work but the mane is dark, **measure resistance between DIN and DOUT
+on each pixel** before suspecting the driver. This is faster and more conclusive
+than an oscilloscope:
+
+| Reading | Meaning |
+| --- | --- |
+| 100–250 Ω | Healthy — that is the controller's input stage |
+| 0 Ω | **Dead: the chip is shorted through** |
+
+Also check DIN against VDD; it must read open, which rules out a supply short.
+
+Because WS2812 pixels are chained, one dead controller stops the whole strip:
+it never passes data to the next pixel, so *all* of them stay dark. Compare the
+suspect pixel against its neighbours — a single 0 Ω among 100–250 Ω readings is
+the failure.
+
+Two things that do **not** work as a repair:
+
+* Bridging DIN to DOUT on the dead pixel. The wire sits in parallel with the
+  existing internal short, so the dead chip still drags the line down. The pixel
+  has to be desoldered.
+* Holding a jumper by hand to test the idea. A frame takes about 280 µs and the
+  render loop repeats every few milliseconds, so a hand contact just corrupts the
+  stream mid-frame.
+
+If you remove a pixel without replacing it, set `LED_COUNT` in `unicornshield.py`
+to the new length; the remaining pixels shift down by one position.
+
+A dead pixel may glow — often green — while you probe it. The meter's test
+current writes a stray value into the colour register, and WS2812 transmits GRB
+(green first). That is a sign the LEDs themselves are fine and only the
+controller's data path failed.

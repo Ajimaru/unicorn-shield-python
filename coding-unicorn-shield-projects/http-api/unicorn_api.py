@@ -107,7 +107,8 @@ def helproute():
             "GET /all?r=&g=&b=": "set all 9 mane pixels + show",
             "GET /off": "clear mane (all pixels off)",
             "GET /brightness?value=0.0-1.0": "set mane brightness",
-            "GET /nose": "read light sensor (charge time seconds)",
+            "GET /nose": ("read light sensor (charge time seconds); "
+                          "adds timeout=true when too dark to measure"),
             "GET /ear": "read button state (true/false)",
         }
     })
@@ -207,7 +208,14 @@ def brightness():
 
 @app.route("/nose")
 def nose():
-    return ok(data=hw(unicorn.nose))
+    # A reading that hits the library's cap is not a real measurement, only a
+    # floor value meaning "at least this dark". Flag it so clients can skip the
+    # sample instead of treating the cap as a genuine brightness level.
+    value = hw(unicorn.nose)
+    timeout = getattr(unicorn, "NOSE_TIMEOUT", None)
+    if timeout is not None and value >= timeout:
+        return ok(data=value, timeout=True)
+    return ok(data=value)
 
 
 @app.route("/ear")

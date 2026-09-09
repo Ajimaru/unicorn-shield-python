@@ -65,6 +65,11 @@ for a working example.
 Please read [EXTREMELY_IMPORTANT_WARNINGS.txt](EXTREMELY_IMPORTANT_WARNINGS.txt)
 before wiring anything up.
 
+**If the mane stays dark** while every call reports success: WS2812 is write-only,
+so the software cannot tell you whether a pixel lit. See
+[Troubleshooting](coding-unicorn-shield-projects/http-api/README.md#troubleshooting-the-mane-stays-dark)
+for how to find a dead pixel with a multimeter.
+
 ## Projects
 
 Example projects live in
