@@ -112,10 +112,35 @@ def _set_zone(pixels, r, g, b):
 
 
 def _eyes(left, right):
+    """left/right: None (leave alone), True/False (on/off), or a 0.0-1.0
+    float (brightness). Booleans stay for /pixel-style on/off callers; the
+    float path is what the value= parameter below uses."""
     if left is not None:
-        unicorn.leftEyeOn() if left else unicorn.leftEyeOff()
+        if isinstance(left, bool):
+            unicorn.leftEyeOn() if left else unicorn.leftEyeOff()
+        else:
+            unicorn.leftEyeBrightness(left)
     if right is not None:
-        unicorn.rightEyeOn() if right else unicorn.rightEyeOff()
+        if isinstance(right, bool):
+            unicorn.rightEyeOn() if right else unicorn.rightEyeOff()
+        else:
+            unicorn.rightEyeBrightness(right)
+
+
+def _eye_value():
+    """Parse the optional value= GET parameter (eye brightness, 0.0-1.0).
+    Returns None if absent, the float if present and valid, or raises
+    ValueError with a message if present but out of range/unparseable."""
+    raw = request.args.get('value')
+    if raw is None:
+        return None
+    try:
+        v = float(raw)
+    except ValueError:
+        raise ValueError("value must be a float 0.0-1.0")
+    if v < 0.0 or v > 1.0:
+        raise ValueError("value must be between 0.0 and 1.0")
+    return v
 
 
 # --- routes ------------------------------------------------------------------
@@ -129,9 +154,9 @@ def helproute():
     return json.dumps({
         "status": True,
         "endpoints": {
-            "GET /eye/left?status=on|off": "left eye (D1)",
-            "GET /eye/right?status=on|off": "right eye (D2)",
-            "GET /eyes?status=on|off": "both eyes",
+            "GET /eye/left?status=on|off&value=0.0-1.0": "left eye (D1); value sets brightness, status=off overrides value",
+            "GET /eye/right?status=on|off&value=0.0-1.0": "right eye (D2); same rules as /eye/left",
+            "GET /eyes?status=on|off&value=0.0-1.0": "both eyes; same rules as /eye/left",
             "GET /pixel/<0-8>?r=&g=&b=": "set one mane pixel + show",
             "GET /all?r=&g=&b=": "set all 9 mane pixels + show",
             "GET /zone/<name>?r=&g=&b=": "set one named body zone (see /zones)",
@@ -146,31 +171,51 @@ def helproute():
     })
 
 
+def _eye_arg():
+    """Combine status= and value= into one arg for _eyes(): True/False for
+    plain on/off, a float for a specific brightness, or raises ValueError.
+    status=off wins over value (an explicit off should not be second-guessed
+    by a stale brightness value left over from an earlier call)."""
+    status = request.args.get('status')
+    if status is not None and status not in ("on", "off"):
+        raise ValueError("status must be >on< or >off<")
+    value = _eye_value()
+    if status == "off":
+        return False
+    if value is not None:
+        return value
+    if status == "on":
+        return True
+    raise ValueError("send >status< (on/off) and/or >value< (0.0-1.0)")
+
+
 @app.route("/eye/left")
 def leftEye():
-    status = request.args.get('status')
-    if status not in ("on", "off"):
-        return err("status must be >on< or >off<")
-    hw(_eyes, status == "on", None)
+    try:
+        arg = _eye_arg()
+    except ValueError as e:
+        return err(str(e))
+    hw(_eyes, arg, None)
     return ok()
 
 
 @app.route("/eye/right")
 def rightEye():
-    status = request.args.get('status')
-    if status not in ("on", "off"):
-        return err("status must be >on< or >off<")
-    hw(_eyes, None, status == "on")
+    try:
+        arg = _eye_arg()
+    except ValueError as e:
+        return err(str(e))
+    hw(_eyes, None, arg)
     return ok()
 
 
 @app.route("/eyes")
 def eyes():
-    status = request.args.get('status')
-    if status not in ("on", "off"):
-        return err("status must be >on< or >off<")
-    on = status == "on"
-    hw(_eyes, on, on)
+    try:
+        arg = _eye_arg()
+    except ValueError as e:
+        return err(str(e))
+    hw(_eyes, arg, arg)
     return ok()
 
 

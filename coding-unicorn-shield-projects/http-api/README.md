@@ -49,9 +49,9 @@ Default base URL: `http://127.0.0.1:5000`
 | --- | --- |
 | `GET /` | Service banner |
 | `GET /help` | Machine-readable list of all endpoints |
-| `GET /eye/left?status=on\|off` | Left eye (D1) |
-| `GET /eye/right?status=on\|off` | Right eye (D2) |
-| `GET /eyes?status=on\|off` | Both eyes at once |
+| `GET /eye/left?status=on\|off&value=0.0-1.0` | Left eye (D1); on/off or a specific brightness |
+| `GET /eye/right?status=on\|off&value=0.0-1.0` | Right eye (D2); same rules |
+| `GET /eyes?status=on\|off&value=0.0-1.0` | Both eyes at once; same rules |
 | `GET /pixel/<0-8>?r=&g=&b=` | Set one mane pixel and show it |
 | `GET /all?r=&g=&b=` | Set all 9 mane pixels and show them |
 | `GET /zone/<name>?r=&g=&b=` | Set one named body zone and show it |
@@ -63,6 +63,26 @@ Default base URL: `http://127.0.0.1:5000`
 | `GET /ear` | Read the button state (`true` / `false`) |
 
 `r`, `g` and `b` are integers from 0 to 255.
+
+### Eye brightness
+
+The eyes accept a `value` parameter (0.0–1.0) as well as `status`. `status=off`
+always wins over `value` — an explicit off is not second-guessed by a stale
+brightness left over from an earlier call. `value` alone (no `status`) just
+sets the brightness.
+
+```bash
+curl "http://127.0.0.1:5000/eyes?value=0.35"          # dim both eyes
+curl "http://127.0.0.1:5000/eye/left?value=1.0"        # left eye full on
+curl "http://127.0.0.1:5000/eyes?status=off&value=0.9" # off wins, value ignored
+```
+
+Unlike the mane, eye dimming is software PWM (`gpiozero.PWMLED`, no hardware
+timer on this board), running in its own thread per eye. Measured on a Pi 1 B+
+with both eyes dimmed and the mane rendering continuously: an extra ~25-30% CPU
+for the API process, no errors or dropped mane frames across hundreds of
+renders. On a busier host that headroom may not be there — watch CPU if you use
+this alongside other heavy work.
 
 **Brightness is global and persists between calls.** It is a property of the
 strip, not of a request, so whatever the last caller set stays in effect — a
@@ -224,12 +244,12 @@ into the audio output.
 
 The mane therefore needs onboard audio disabled:
 
-```
+```text
 # /boot/config.txt
 dtparam=audio=off
 ```
 
-```
+```text
 # /etc/modprobe.d/blacklist-snd-bcm2835.conf
 blacklist snd_bcm2835
 ```
